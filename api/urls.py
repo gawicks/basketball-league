@@ -14,14 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.shortcuts import redirect
-from django.urls import path, include
+from django.urls import path
+
 from . import views
 
 urlpatterns = [
     path('', lambda request: redirect('/scoreboard', permanent=True)),
     path('scoreboard', views.scoreboard),
-    path('team/<int:id>', views.team),
-    path('player/<int:id>', views.player),
-    path('stats',views.stats),
+    path('scoreboard/<int:game_id>', views.scoreboard),
+    path('team/<int:team_id>', views.team),
+    path('player/<int:player_id>', views.player),
+    path('stats', views.stats),
     path('logout', views.logout_view),
 ]
