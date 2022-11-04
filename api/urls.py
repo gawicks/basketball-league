@@ -20,9 +20,8 @@ from . import views
 urlpatterns = [
     path('', lambda request: redirect('/scoreboard', permanent=True)),
     path('scoreboard', views.scoreboard),
-    path('scoreboard/<int:id>', views.scoreboard),
-    path('team', views.team),
     path('team/<int:id>', views.team),
+    path('player/<int:id>', views.player),
     path('logout', views.logout_view),
 
 ]

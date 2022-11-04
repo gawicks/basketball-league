@@ -4,7 +4,7 @@ from unittest import result
 from django.db import models
 
 # Create your models here.
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission, ContentType
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -18,8 +18,9 @@ class Player(User):
 
 
 class LeagueAdmin(User):
-    pass
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_superuser = True
 
 class Coach(User):
     team = models.OneToOneField(Team, on_delete=models.PROTECT)
