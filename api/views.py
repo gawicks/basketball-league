@@ -1,64 +1,52 @@
-import plistlib
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework import status
+
 from base.models import Team
-from .serlalizers import TeamSerializer
-from base.models import Group, Player, LeagueAdmin, Coach
-from django.contrib.auth.decorators import login_required
-@api_view(['GET'])
+from .serlalizers import GamesSerializer, PlayerSerializer, TeamSerializer
+from base.models import Group, Player, LeagueAdmin, Coach, Game, Team
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth import logout
+
+@api_view(['POST'])
+def logout_view(request):
+    logout(request)
+    return Response(status=status.HTTP_200_OK)
+
 @login_required()
-def auth(request):
-    content = {
-        'user': str(request.user),  # `django.contrib.auth.User` instance.
-        'auth': str(request.auth),  # None
-    }
-    return Response(content)
-
 @api_view(['GET'])
-def get(request):
-    teams = Team.objects.all()
-    serializer = TeamSerializer(teams, many=True)
+def scoreboard(request,id= None):
+    games = []
+    if id is None:
+        games = Game.objects.all()
+    else:
+        games = Game.objects.filter(id=id)
 
-    adminGroup, _ =Group.objects.update_or_create(name='admins')
-    playerGroup, _= Group.objects.update_or_create(name='players')
-    coachGroup, _ =Group.objects.update_or_create(name='coaches')
-
-    team1, _= Team.objects.update_or_create(name='Manchester United')
-    team2, _= Team.objects.update_or_create(name='Liverpool')
-
-
-    player1 = Player.objects.create_user(username='cr57', password='test', email='cr57@manchesterufc.com',
-                    first_name='Christiano', last_name='Ronaldo', team=team1)
-    player2 = Player.objects.create_user(username='ddgea', password='test', email='ddgea@manchesterufc.com',
-                    first_name='David', last_name='Gea', team=team2)
-    player3 = Player.objects.create_user(username='abecker', password='test', email='abecker@liverpoolfc.com',
-                    first_name='Alisson', last_name='Becker', team=team2)
-    player4 = Player.objects.create_user(username='talcantara', password='test', email='talcantara@liverpoolfc.com',
-                    first_name='Thiago', last_name='Alcantara', team=team2)
-
-    player1.groups.add(playerGroup)
-    player2.groups.add(playerGroup)
-    player3.groups.add(playerGroup)
-    player4.groups.add(playerGroup)
-
-    player1.save()
-    player2.save()
-    player3.save()
-    player4.save()
-
-    coach1 = Coach.objects.create_user(username='jklopp', password='test', email='jklopp@manchesterufc.com',
-                first_name='Jürgen', last_name='Klopp', team=team1)
-    coach2 = Coach.objects.create_user(username='ehag', password='test', email='ehag@liverpoolfc.com',
-                first_name='Erik', last_name='Hag', team=team2)
-
-    coach1.groups.add(coachGroup)
-    coach2.groups.add(coachGroup)
-    coach1.save()
-    coach2.save()
-
-    leagueAdmin= LeagueAdmin.objects.create_user(username='gawicks', password='root',
-                            email='gawicks@premierleague.com', first_name='Haritha', last_name='Wickremasinghe')
-    leagueAdmin.groups.add(adminGroup)
-    leagueAdmin.save()
-
+    serializer = GamesSerializer(games, many=True)
     return Response(serializer.data)
+
+@login_required()
+@api_view(['GET'])
+def team(request,id):
+    filters = request.GET.get('filter')
+    teams = Team.objects.filter(id=id)[0]
+    teamserializer = TeamSerializer(teams, many=False)
+    players=None
+    if (filters == "90percentile"):
+        team = Team.objects.filter(id=id)[0]
+        players = team.player_set.all()
+        avg = sum(map(lambda x:x.average, players), 0.0) / len(players)
+        players = PlayerSerializer(filter(lambda x:x.average>avg, players), many=True).data
+    else:
+        players = Player.objects.filter(team=id)
+        playerserializer = PlayerSerializer(players, many=True)
+        players = playerserializer.data
+
+    return Response({ "team": teamserializer.data, "players": players})
+
+
+# def player(request):
+#     pass
+#@permission_required('base.view_game', raise_exception=True)
+
+
