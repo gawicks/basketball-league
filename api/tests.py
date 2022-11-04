@@ -21,8 +21,10 @@ def create_user(role, username=None, password=None, email=None, **kwargs):
     if role == Player:
         user = Player.objects.create_user(username, email, password, **kwargs)
         group, _ = Group.objects.get_or_create(name="players")
-        contentType_player,_ = ContentType.objects.get_or_create(app_label='base',model='player')
-        permission_view_player,_= Permission.objects.get_or_create(content_type_id=contentType_player.id,codename="view_player")
+        contentType_player, _ = ContentType.objects.get_or_create(
+            app_label='base', model='player')
+        permission_view_player, _ = Permission.objects.get_or_create(
+            content_type_id=contentType_player.id, codename="view_player")
         group.permissions.add(permission_view_player)
         print(group)
         user.groups.add(group)
@@ -31,14 +33,19 @@ def create_user(role, username=None, password=None, email=None, **kwargs):
         group = Group.objects.create(name="coaches")
         if group is None:
             group = Group.objects.create(name="coaches")
-        contentType_team,_ = ContentType.objects.get_or_create(app_label='base',model='team')
-        contentType_player,_ = ContentType.objects.get_or_create(app_label='base',model='player')
-        permission_view_team,_ = Permission.objects.get_or_create(content_type_id=contentType_team.id,codename="view_team")
-        permission_view_player,_= Permission.objects.get_or_create(content_type_id=contentType_player.id,codename="view_player")
+        contentType_team, _ = ContentType.objects.get_or_create(
+            app_label='base', model='team')
+        contentType_player, _ = ContentType.objects.get_or_create(
+            app_label='base', model='player')
+        permission_view_team, _ = Permission.objects.get_or_create(
+            content_type_id=contentType_team.id, codename="view_team")
+        permission_view_player, _ = Permission.objects.get_or_create(
+            content_type_id=contentType_player.id, codename="view_player")
         group.permissions.add(permission_view_team)
         group.permissions.add(permission_view_player)
         user.groups.add(group)
     elif role == LeagueAdmin:
+        # LeagueAdmin is a super user, there's no need to assign permissions explictly
         user = LeagueAdmin.objects.create_user(
             username, email, password, **kwargs)
         group = Group.objects.create(name="admins")
@@ -52,7 +59,8 @@ class Scoreboard(APITestCase):
         username, password, _ = create_user(Player, team_id=team.id)
         self.client.login(username=username, password=password)
         response = self.client.get('/')
-        self.assertEqual(response.status_code, status.HTTP_301_MOVED_PERMANENTLY)
+        self.assertEqual(response.status_code,
+                         status.HTTP_301_MOVED_PERMANENTLY)
         self.assertEqual(response.url, '/scoreboard')
 
     def test_logged_in_user_can_view_scoreboard(self):
@@ -104,18 +112,19 @@ class Teams(APITestCase):
     def test_coach_can_view_own_team_player_stats(self):
         team1 = TeamFactory(name='foo')
         username, password, _ = create_user(Coach, team_id=team1.id)
-        _, _, playerId = create_user(Player, username="russel", team_id=team1.id)
+        _, _, playerId = create_user(
+            Player, username="russel", team_id=team1.id)
         self.client.login(username=username, password=password)
         response = self.client.get(f'/player/{playerId}', follow=True)
         responseJson = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(responseJson['username'], "russel")
 
-
     def test_player_can_view_own_stats(self):
         team1 = TeamFactory(name='foo')
         create_user(Coach, team_id=team1.id)
-        username, password, playerId = create_user(Player, username="arnold", team_id=team1.id)
+        username, password, playerId = create_user(
+            Player, username="arnold", team_id=team1.id)
         self.client.login(username=username, password=password)
         response = self.client.get(f'/player/{playerId}', follow=True)
         responseJson = response.json()
@@ -143,3 +152,17 @@ class Teams(APITestCase):
         responseJson = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(responseJson['username'], "john")
+
+
+class Stats(APITestCase):
+    def test_admin_can_view_stats(self):
+        username, password, _ = create_user(LeagueAdmin)
+        self.client.login(username=username, password=password)
+        response = self.client.get('/stats')
+        responseJson = response.json()[0]
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(responseJson['username'], username)
+        self.assertEqual(responseJson['times_logged_in'], 1)
+
+
+

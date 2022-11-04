@@ -22,6 +22,6 @@ urlpatterns = [
     path('scoreboard', views.scoreboard),
     path('team/<int:id>', views.team),
     path('player/<int:id>', views.player),
+    path('stats',views.stats),
     path('logout', views.logout_view),
-
 ]

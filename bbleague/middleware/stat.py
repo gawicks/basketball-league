@@ -1,14 +1,16 @@
+import datetime
+from base.models import Stat
+
+
 def stat_middleware(get_response):
     # One-time configuration and initialization.
 
     def middleware(request):
-        # Code to be executed for each request before
-        # the view (and later middleware) are called.
         response = get_response(request)
         print(request.user)
-
-        # Code to be executed for each request/response after
-        # the view is called.
+        if(request.user is not None and request.user.id is not None):
+            Stat.objects.update_or_create(user_id=request.user.id, defaults={'last_online':datetime.datetime.now()})
+        #TODO: Collect more stats here
 
         return response
 

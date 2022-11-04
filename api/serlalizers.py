@@ -1,6 +1,6 @@
 from dataclasses import field
 from rest_framework import serializers
-from base.models import Game, Player, Team
+from base.models import Game, Player, Stat, Team
 
 class TeamSerializer(serializers.ModelSerializer):
     team_average = serializers.SerializerMethodField('get_team_average')
@@ -24,4 +24,10 @@ class GamesSerializer(serializers.ModelSerializer):
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
+        fields = '__all__'
+
+class StatSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username')
+    class Meta:
+        model = Stat
         fields = '__all__'

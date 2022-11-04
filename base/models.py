@@ -40,3 +40,8 @@ class Game(models.Model):
     status = models.CharField(max_length=100,choices=GameStatus.choices)
     isDrawn = models.BooleanField(default=False)
 
+class Stat(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    last_login = models.DateTimeField(null=True, blank=True)
+    last_online = models.DateTimeField(null=True, blank=True)
+    times_logged_in=models.PositiveIntegerField(null=True, blank=True)

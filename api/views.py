@@ -3,12 +3,12 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 
 from base.models import Team
-from .serlalizers import GamesSerializer, PlayerSerializer, TeamSerializer
+from .serlalizers import GamesSerializer, PlayerSerializer, StatSerializer, TeamSerializer
 from base.models import Group, Player, LeagueAdmin, Coach, Game, Team
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth import logout
 import numpy
-
+from .signals import Stat
 
 @api_view(['POST'])
 def logout_view(request):
@@ -66,4 +66,13 @@ def player(request, id):
     playerserializer = PlayerSerializer(player)
     player_data = playerserializer.data
     return Response(player_data)
-# @permission_required('base.view_game', raise_exception=True)
+
+@api_view(['GET'])
+@permission_required('base.view_stat', raise_exception=True)
+def stats(request):
+    stats = Stat.objects.all()
+    statserializer = StatSerializer(stats, many=True)
+    stat_data = statserializer.data
+    return Response(stat_data)
+
+
